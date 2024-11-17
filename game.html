@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Card Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .game-info {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 500px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 5px;
+            font-size: 40px;
+            color: white;
+        }
+        .card-front {
+            background-color: #3498db;
+        }
+        .card-back {
+            background-color: #2ecc71;
+            transform: rotateY(180deg);
+        }
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .restart-btn:hover {
+            background-color: #c0392b;
+        }
+    @media (max-width: 600px) {
+    .game-board {
+        grid-template-columns: repeat(4, 1fr); /* Reduce to 2 columns */
+        gap: 8px; /* Smaller gap */
+    }
+    .card {
+        width: 80px;
+        height: 80px; /* Reduce card size */
+    }
+    .card-front, .card-back {
+        font-size: 30px; /* Adjust font size */
+    }
+    .game-info {
+        font-size: 16px; /* Slightly smaller text */
+    }
+    .restart-btn {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+}
+@media (min-width: 601px) and (max-width: 1024px) {
+    .game-board {
+        grid-template-columns: repeat(5, 1fr); 
+        gap: 10px;
+    }
+    .card {
+        width: 90px;
+        height: 90px;
+    }
+    .card-front, .card-back {
+        font-size: 35px;
+    }
+    .restart-btn {
+        font-size: 15px;
+        padding: 9px 18px;
+    }
+}
+@media (min-width: 1025px) {
+    .game-board {
+        max-width: 800px; /* Increase maximum width */
+        gap: 15px;
+    }
+    .card {
+        width: 120px;
+        height: 120px; /* Larger cards */
+    }
+    .card-front, .card-back {
+        font-size: 45px;
+    }
+    .restart-btn {
+        font-size: 18px;
+        padding: 12px 24px;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <h1>Memory Card Game</h1>
+    <div class="game-info">
+        Moves: <span id="moves">0</span> | 
+        Pairs Found: <span id="pairs">0</span>
+    </div>
+    <div class="game-board" id="gameBoard"></div>
+    <button class="restart-btn" id="restartBtn">Restart Game</button>
+
+    <script>
+        const gameBoard = document.getElementById('gameBoard');
+        const movesDisplay = document.getElementById('moves');
+        const pairsDisplay = document.getElementById('pairs');
+        const restartBtn = document.getElementById('restartBtn');
+
+        const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼','💀','😒'];
+        let cards = [...emojis, ...emojis];
+        let moves = 0;
+        let pairsFound = 0;
+        let flippedCards = [];
+
+        function shuffleCards(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createCard(emoji, index) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-front">?</div>
+                <div class="card-back">${emoji}</div>
+            `;
+            card.dataset.index = index;
+            card.addEventListener('click', flipCard);
+            return card;
+        }
+
+        function flipCard() {
+            if (flippedCards.length === 2) return;
+            
+            this.classList.add('flipped');
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                moves++;
+                movesDisplay.textContent = moves;
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+            const isMatch = card1.querySelector('.card-back').textContent === 
+                            card2.querySelector('.card-back').textContent;
+
+            if (isMatch) {
+                pairsFound++;
+                pairsDisplay.textContent = pairsFound;
+                flippedCards = [];
+                if (pairsFound === emojis.length) {
+                    setTimeout(() => alert(`Congratulations! You won in ${moves} moves!`), 500);
+                }
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                }, 1000);
+            }
+        }
+
+        function initializeGame() {
+            gameBoard.innerHTML = '';
+            moves = 0;
+            pairsFound = 0;
+            flippedCards = [];
+            movesDisplay.textContent = moves;
+            pairsDisplay.textContent = pairsFound;
+
+            shuffleCards(cards).forEach((emoji, index) => {
+                gameBoard.appendChild(createCard(emoji, index));
+            });
+        }
+
+        restartBtn.addEventListener('click', initializeGame);
+
+        initializeGame();
+    </script>
+</body>
+</html>
